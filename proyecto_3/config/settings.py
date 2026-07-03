@@ -1,5 +1,6 @@
 from pathlib import Path
 import os
+import dj_database_url
 from dotenv import load_dotenv 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -75,19 +76,18 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
+# ── Base de datos ──────────────────────────────────────────────
+# En Render: usa DATABASE_URL (Postgres) automáticamente.
+# En local: si no hay DATABASE_URL, cae a tu configuración MySQL de siempre.
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': _env('DB_NAME', 'proyecto'),
-        'USER': _env('DB_USER', 'root'),
-        'PASSWORD': _env('DB_PASSWORD', '12345678',),
-        'HOST': _env('DB_HOST', 'localhost'),
-        'PORT': _env('DB_PORT', '3306'),
-        'OPTIONS': {
-            'init_command': "SET time_zone = '-05:00'",
-        },
-    }
+    'default': dj_database_url.config(
+        default=f"mysql://{_env('DB_USER', 'root')}:{_env('DB_PASSWORD', '12345678')}@{_env('DB_HOST', 'localhost')}:{_env('DB_PORT', '3306')}/{_env('DB_NAME', 'proyecto')}",
+        conn_max_age=600,
+    )
 }
+
+if DATABASES['default']['ENGINE'] == 'django.db.backends.mysql':
+    DATABASES['default']['OPTIONS'] = {'init_command': "SET time_zone = '-05:00'"}
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
@@ -106,6 +106,7 @@ THOUSAND_SEPARATOR = '.'
 
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'app' / 'static']
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # ── Archivos subidos por el usuario (fotos de admins, etc.) ──────
 MEDIA_URL  = '/media/'
